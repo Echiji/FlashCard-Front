@@ -1,30 +1,38 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from './views/Home.vue';
-<<<<<<< HEAD
 import Lesson from './views/Lesson.vue';
 import FinalScreen from './views/FinalScreen.vue';
-import { lessons } from './data/LessonsStore';
+import LogIn from './views/LogIn.vue';
+import Register from './views/Register.vue';
+import CreateLesson from './views/CreateLesson.vue';  
+import NewUser from './views/NewUser.vue';
 
-=======
->>>>>>> c3f321bb5155019cee0c2bbe86aa41defb81a566
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
       component: Home
-<<<<<<< HEAD
+    },
+    {
+      path: '/NewUser',
+      component: NewUser
+    },
+    {
+      path: '/login',
+      component: LogIn
+    },
+    {
+      path: '/register',
+      component: Register
+    },
+    {
+      path: '/create-lesson/:id',
+      component: CreateLesson
     },
     {
       path: '/lesson/:id',
       component: Lesson,
-      props: (route) => {
-        const lesson = lessons.find((l) => l.id === parseInt(route.params.id as string));
-        return {
-          questions: lesson?.questions || [],
-          answers: lesson?.answers || []
-        };
-      }
     },
     {
       path: '/final-screen',
@@ -33,9 +41,4 @@ const router = createRouter({
   ]
 });
 
-=======
-    }
-  ]
-});
->>>>>>> c3f321bb5155019cee0c2bbe86aa41defb81a566
 export default router;

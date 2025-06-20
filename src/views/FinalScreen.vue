@@ -9,16 +9,16 @@
                 <div class="confetti"></div>
             </div>
             
-            <div class="result-card">
+            <div class="result-card card">
                 <div class="trophy-icon">🏆</div>
-                <h1 class="title">Félicitations !</h1>
+                <h1 class="title title-xl">Félicitations !</h1>
                 <p class="subtitle">Vous avez terminé la leçon avec succès !</p>
                 <div class="actions">
-                    <button class="btn primary" @click="goToHome">
+                    <button class="btn btn-primary" @click="goToHome">
                         <span class="icon">🏠</span>
                         Retour à l'accueil
                     </button>
-                    <button class="btn secondary" @click="retryLesson">
+                    <button class="btn btn-secondary" @click="retryLesson">
                         <span class="icon">🔄</span>
                         Réessayer
                     </button>
@@ -47,8 +47,8 @@ const retryLesson = () => {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    padding: 2rem;
+    background: linear-gradient(135deg, var(--bg-dark) 0%, #16213e 100%);
+    padding: var(--spacing-xl);
 }
 
 .final-screen-content {
@@ -59,75 +59,86 @@ const retryLesson = () => {
 
 .result-card {
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    padding: 2rem;
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-2xl);
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-lg);
     animation: slideUp 0.5s ease-out;
+    border: none;
+    backdrop-filter: blur(10px);
 }
 
 .trophy-icon {
     font-size: 4rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
     animation: bounce 1s ease infinite;
 }
 
 .title {
-    color: #2c3e50;
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+    color: var(--secondary-color);
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--spacing-sm);
     font-weight: 700;
+    line-height: 1.2;
 }
 
 .subtitle {
-    color: #666;
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+    color: var(--gray);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-xl);
+    line-height: 1.5;
 }
 
 .actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--spacing-md);
     justify-content: center;
-    margin-top: 2rem;
+    margin-top: var(--spacing-xl);
+    flex-wrap: wrap;
 }
 
 .btn {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    font-size: var(--font-size-base);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     border: none;
+    min-height: 48px;
+    text-decoration: none;
+    justify-content: center;
 }
 
-.btn.primary {
-    background: #3498db;
-    color: white;
+.btn-primary {
+    background: var(--primary-color);
+    color: var(--white);
 }
 
-.btn.primary:hover {
-    background: #2980b9;
+.btn-primary:hover {
+    background: var(--primary-hover);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.btn.secondary {
-    background: #f8f9fa;
-    color: #2c3e50;
-    border: 2px solid #e9ecef;
+.btn-secondary {
+    background: var(--light-gray);
+    color: var(--secondary-color);
+    border: 2px solid var(--border-color);
 }
 
-.btn.secondary:hover {
-    background: #e9ecef;
+.btn-secondary:hover {
+    background: var(--gray);
+    color: var(--white);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .icon {
-    font-size: 1.2rem;
+    font-size: var(--font-size-lg);
 }
 
 /* Animations */
@@ -185,32 +196,119 @@ const retryLesson = () => {
     }
 }
 
-/* Responsive design */
+/* Media queries */
 @media (max-width: 768px) {
     .final-screen {
-        padding: 1rem;
+        padding: var(--spacing-md);
     }
 
     .result-card {
-        padding: 1.5rem;
+        padding: var(--spacing-xl);
     }
 
     .title {
-        font-size: 2rem;
+        font-size: var(--font-size-3xl);
     }
 
-    .stats-container {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
+    .subtitle {
+        font-size: var(--font-size-base);
     }
 
     .actions {
         flex-direction: column;
+        align-items: center;
     }
 
     .btn {
         width: 100%;
-        justify-content: center;
+        max-width: 300px;
+    }
+
+    .trophy-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .final-screen {
+        padding: var(--spacing-sm);
+    }
+
+    .result-card {
+        padding: var(--spacing-lg);
+    }
+
+    .title {
+        font-size: var(--font-size-2xl);
+    }
+
+    .subtitle {
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .actions {
+        margin-top: var(--spacing-lg);
+        gap: var(--spacing-sm);
+    }
+
+    .btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+        min-height: 44px;
+    }
+
+    .trophy-icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .icon {
+        font-size: var(--font-size-base);
+    }
+}
+
+@media (min-width: 1024px) {
+    .final-screen-content {
+        max-width: 700px;
+    }
+
+    .result-card {
+        padding: var(--spacing-2xl);
+    }
+
+    .title {
+        font-size: var(--font-size-4xl);
+    }
+
+    .actions {
+        gap: var(--spacing-lg);
+    }
+
+    .btn {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        font-size: var(--font-size-lg);
+        min-height: 56px;
+    }
+}
+
+/* Réduction de mouvement pour l'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    .result-card {
+        animation: none;
+    }
+
+    .trophy-icon {
+        animation: none;
+    }
+
+    .confetti {
+        animation: none;
+        display: none;
+    }
+
+    .btn:hover {
+        transform: none;
     }
 }
 </style>
