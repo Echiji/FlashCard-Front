@@ -7,7 +7,7 @@
                     <input 
                         v-model="email" 
                         type="text" 
-                        placeholder="Email" 
+                        placeholder="Username" 
                         required
                         class="input"
                     >
@@ -60,7 +60,7 @@ const handleLogin = async () => {
         });
         
         authStore.setUser(response.user);
-        router.push('/dashboard');
+        router.push('/');
     } catch (err: any) {
         error.value = err.message || 'An error occurred during login';
     } finally {

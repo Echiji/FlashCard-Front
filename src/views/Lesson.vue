@@ -40,50 +40,67 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import LessonService from '@/services/LessonService';
 import QuestionService from '@/services/QuestionService';
+import TestControleService from '@/services/TestControleService';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 
 const currentIndex = ref(0);
 const showAnswer = ref(false);
 const currentLesson = ref(null);
+const testControle = ref({
+    lessonId: 0,
+    nbBonneReponse: 0,
+    nbQuestion: 0,
+    userId: 0,
+});
 const questions = ref(null);    
 const loading = ref(true);
 const answer = ref('');
 const correctAnswer = ref(false);
 
 onMounted(async () => {
-    try {
         const lessonId = route.params.id;
         currentLesson.value = await LessonService.getLessonById(parseInt(lessonId as string));
         questions.value = await QuestionService.getQuestionsByLesson(currentLesson.value);
+        console.log(authStore.currentUser)
+        testControle.value.lessonId = currentLesson.value.id;
+        testControle.value.nbQuestion = questions.value.length;
+        testControle.value.userId = parseInt(authStore.currentUser?.id || '0');
+        console.log(testControle.value)
         loading.value = false;
-    } catch (error) {
-        console.error('Erreur lors du chargement de la leçon:', error);
-        router.push('/lessons');
     }
-});
+);
 
 const totalQuestions = computed(() => {
     if (!questions.value) return 0;
     return questions.value.length;
 });
 
-const checkAnswer = () => {
+const checkAnswer = async () => {
     if (!questions.value || !questions.value[currentIndex.value]) return;
     
     if (answer.value.toLowerCase() === questions.value[currentIndex.value].answer.toLowerCase()) {
         correctAnswer.value = true;
         showAnswer.value = false;
-        setTimeout(() => {
-            if (currentIndex.value < totalQuestions.value - 1) {
-                nextQuestion();
-            } else {
-                router.push('/final-screen');
+        testControle.value.nbBonneReponse++;
+        if (currentIndex.value < totalQuestions.value - 1) {
+            nextQuestion();
+        } else {
+            try {
+                const testControleCreated = await TestControleService.createTestControle(testControle.value);
+                router.push(`/final-screen/${testControleCreated.id}`);
+            } catch (error) {
+                console.error('Erreur lors de la création du test contrôle:', error);
+                // Gérer l'erreur - par exemple afficher un message à l'utilisateur
+                alert('Erreur lors de la sauvegarde du résultat. Veuillez réessayer.');
             }
-        }, 10);
+        }
     } else {
         showAnswer.value = true;
+        testControle.value.nbBonneReponse--;
     }
 };
 

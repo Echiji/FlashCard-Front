@@ -31,11 +31,20 @@ const props = defineProps<{
 }>();
 
 const GoInTheLesson = () => {
-    router.push(`/lesson/${props.lesson.id}`);
+    router.push(`/lessons/${props.lesson.id}`);
 }
 
 const goToEditMode = () => {
-    router.push(`/create-lesson/${props.lesson.id}`);
+    // Détecter d'où on vient en regardant l'URL actuelle
+    const currentPath = window.location.pathname;
+    
+    if (currentPath.includes('/course/') && currentPath.includes('/lessons')) {
+        // On vient de CourseLessons
+        router.push(`/create-lesson/${props.lesson.id}?from=course-lessons`);
+    } else {
+        // On vient de Home
+        router.push(`/create-lesson/${props.lesson.id}?from=home`);
+    }
 }   
 const deleteLesson = async () => {
     await lessonService.deleteLesson(props.lesson.id);

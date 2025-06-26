@@ -83,11 +83,12 @@ const handleRegister = async () => {
     
     const response = await authService.register({
       username: username.value,
+      email: email.value,
       password: password.value
     });
     
     authStore.setUser(response.user);
-    router.push('/dashboard');
+    router.push('/');
   } catch (err: any) {
     error.value = err.message || 'An error occurred during registration';
   } finally {

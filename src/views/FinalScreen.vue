@@ -13,6 +13,28 @@
                 <div class="trophy-icon">🏆</div>
                 <h1 class="title title-xl">Félicitations !</h1>
                 <p class="subtitle">Vous avez terminé la leçon avec succès !</p>
+                
+                <!-- Message spécial pour un score parfait -->
+                <div v-if="isPerfect" class="perfect-score-message">
+                    <div class="perfect-icon">⭐</div>
+                    <p class="perfect-text">Score parfait ! C'est une masterclass ! 🎉</p>
+                </div>
+                
+                <div class="results">
+                    <div class="result-item">
+                        <span class="result-label">Score :</span>
+                        <span class="result-value">{{ testControle?.nbBonneReponse }} / {{ testControle?.nbQuestion }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Pourcentage :</span>
+                        <span class="result-value">{{ testControle?.pourcentageReussite }}%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Performance :</span>
+                        <span class="performance-level" :class="performanceClass">{{ performanceText }}</span>
+                    </div>
+                </div>
+                
                 <div class="actions">
                     <button class="btn btn-primary" @click="goToHome">
                         <span class="icon">🏠</span>
@@ -29,15 +51,72 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import testControleService from '@/services/TestControleService';
+import { useAuthStore } from '@/stores/auth';
+
+
 const router = useRouter();
+const route = useRoute();
+
+const testControle = ref<any>(null);
+const authStore = useAuthStore();
+const isPerfect = ref(false);
+
+onMounted(async () => {
+    try {
+        console.log('testControleService:', testControleService);
+        console.log('Type:', typeof testControleService);
+        console.log('Méthodes:', Object.getOwnPropertyNames(testControleService));
+        
+        const testControleId = parseInt(route.params.id as string);
+        console.log('ID:', testControleId);
+        
+        // Test si la méthode existe
+        if (typeof testControleService.getTestControleById === 'function') {
+            console.log('Méthode trouvée !');
+            const data = await testControleService.getTestControleById(testControleId);
+            testControle.value = data;
+        } else {
+            console.log('Méthode NON trouvée !');
+        }
+        
+        isPerfect.value = await testControleService.isPerfect(testControleId);
+    } catch (error) {
+        console.error('Erreur complète:', error);
+    }
+});
+
+// Déterminer la performance
+const performanceClass = computed(() => {
+    const pct = testControle.value?.pourcentageReussite;
+    if (!pct) return 'poor';
+    if (pct >= 90) return 'excellent';
+    if (pct >= 80) return 'very-good';
+    if (pct >= 70) return 'good';
+    if (pct >= 60) return 'fair';
+    if (pct >= 50) return 'passable';
+    return 'poor';
+});
+
+const performanceText = computed(() => {
+    const pct = testControle.value?.pourcentageReussite;
+    if (!pct) return 'Insuffisant';
+    if (pct >= 90) return 'Excellent';
+    if (pct >= 80) return 'Très bien';
+    if (pct >= 70) return 'Bien';
+    if (pct >= 60) return 'Assez bien';
+    if (pct >= 50) return 'Passable';
+    return 'Insuffisant';
+});
 
 const goToHome = () => {
     router.push('/');
 };
 
 const retryLesson = () => {
-    router.back();
+    router.push('/courses');
 };
 </script>
 
@@ -87,6 +166,108 @@ const retryLesson = () => {
     font-size: var(--font-size-lg);
     margin-bottom: var(--spacing-xl);
     line-height: 1.5;
+}
+
+.perfect-score-message {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-lg) 0;
+    border: 2px solid #ffb300;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+.perfect-icon {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.perfect-text {
+    color: #8b4513;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.results {
+    background: var(--light-gray);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-xl) 0;
+    border: 1px solid var(--border-color);
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-label {
+    font-weight: 600;
+    color: var(--secondary-color);
+    font-size: var(--font-size-lg);
+}
+
+.result-value {
+    font-weight: 700;
+    font-size: var(--font-size-xl);
+    color: var(--primary-color);
+}
+
+.performance-level {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+
+.performance-level.excellent {
+    background: #4ade80;
+    color: white;
+}
+
+.performance-level.very-good {
+    background: #22c55e;
+    color: white;
+}
+
+.performance-level.good {
+    background: #16a34a;
+    color: white;
+}
+
+.performance-level.fair {
+    background: #ca8a04;
+    color: white;
+}
+
+.performance-level.passable {
+    background: #dc2626;
+    color: white;
+}
+
+.performance-level.poor {
+    background: #991b1b;
+    color: white;
+}
+
+.loading-results,
+.error-results {
+    background: var(--light-gray);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-xl) 0;
+    color: var(--gray);
+    font-style: italic;
 }
 
 .actions {
@@ -162,6 +343,24 @@ const retryLesson = () => {
     }
 }
 
+@keyframes glow {
+    from {
+        box-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700, 0 0 15px #ffd700;
+    }
+    to {
+        box-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700, 0 0 30px #ffd700;
+    }
+}
+
+@keyframes sparkle {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+    }
+    50% {
+        transform: scale(1.2) rotate(180deg);
+    }
+}
+
 /* Confetti animation */
 .confetti-container {
     position: absolute;
@@ -210,10 +409,6 @@ const retryLesson = () => {
         font-size: var(--font-size-3xl);
     }
 
-    .subtitle {
-        font-size: var(--font-size-base);
-    }
-
     .actions {
         flex-direction: column;
         align-items: center;
@@ -224,8 +419,10 @@ const retryLesson = () => {
         max-width: 300px;
     }
 
-    .trophy-icon {
-        font-size: 3rem;
+    .result-item {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        text-align: center;
     }
 }
 
@@ -242,73 +439,13 @@ const retryLesson = () => {
         font-size: var(--font-size-2xl);
     }
 
-    .subtitle {
-        font-size: var(--font-size-sm);
-        margin-bottom: var(--spacing-lg);
-    }
-
-    .actions {
-        margin-top: var(--spacing-lg);
-        gap: var(--spacing-sm);
-    }
-
-    .btn {
-        padding: var(--spacing-sm) var(--spacing-md);
-        font-size: var(--font-size-sm);
-        min-height: 44px;
-    }
-
     .trophy-icon {
-        font-size: 2.5rem;
-        margin-bottom: var(--spacing-sm);
+        font-size: 3rem;
     }
 
-    .icon {
+    .result-label,
+    .result-value {
         font-size: var(--font-size-base);
-    }
-}
-
-@media (min-width: 1024px) {
-    .final-screen-content {
-        max-width: 700px;
-    }
-
-    .result-card {
-        padding: var(--spacing-2xl);
-    }
-
-    .title {
-        font-size: var(--font-size-4xl);
-    }
-
-    .actions {
-        gap: var(--spacing-lg);
-    }
-
-    .btn {
-        padding: var(--spacing-lg) var(--spacing-xl);
-        font-size: var(--font-size-lg);
-        min-height: 56px;
-    }
-}
-
-/* Réduction de mouvement pour l'accessibilité */
-@media (prefers-reduced-motion: reduce) {
-    .result-card {
-        animation: none;
-    }
-
-    .trophy-icon {
-        animation: none;
-    }
-
-    .confetti {
-        animation: none;
-        display: none;
-    }
-
-    .btn:hover {
-        transform: none;
     }
 }
 </style>

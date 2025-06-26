@@ -4,12 +4,12 @@ import router from '@/router';
 const API_URL = '/api/auth';
 
 interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
 interface RegisterData extends LoginCredentials {
-  username: string;
+  email: string;
 }
 
 interface AuthResponse {

@@ -58,9 +58,9 @@ const handleHome = () => {
         <button v-if="isLoggedIn" @click="router.push('/')" class="nav-button">Home</button>
         <button v-else @click="router.push('/NewUser')" class="nav-button">Home</button>
         <template v-if="isLoggedIn">
-          <button @click="router.push('/dashboard')" class="nav-button">Dashboard</button>
+          <button @click="router.push('/profile')" class="nav-button">Profile</button>
+          <button @click="router.push('/courses')" class="nav-button">Course</button>
           <div class="user-menu">
-            <span class="username">{{ currentUser?.username }}</span>
             <button @click="handleLogout" class="nav-button logout">Logout</button>
           </div>
         </template>
@@ -74,7 +74,7 @@ const handleHome = () => {
       <nav class="nav mobile-nav" :class="{ 'open': isMobileMenuOpen }">
         <button @click="() => { router.push('/'); closeMobileMenu(); }" class="nav-button">Home</button>
         <template v-if="isLoggedIn">
-          <button @click="() => { router.push('/dashboard'); closeMobileMenu(); }" class="nav-button">Dashboard</button>
+          <button @click="() => { router.push('/profile'); closeMobileMenu(); }" class="nav-button">Profile</button>
           <div class="user-menu-mobile">
             <span class="username">{{ currentUser?.username }}</span>
             <button @click="handleLogout" class="nav-button logout">Logout</button>

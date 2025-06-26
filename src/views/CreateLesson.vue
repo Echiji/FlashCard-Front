@@ -1,11 +1,20 @@
 <template>
 <div class="container">
     <div class="container-header">
-        <div class="Info-leçon">
-            <h1>{{ lesson.title }}</h1>
-            <span>{{ lesson.description }}</span>
+        <div class="header-left">
+            <button @click="goBack" class="back-btn">
+                <span class="back-icon">←</span>
+                Retour
+            </button>
+            <div class="Info-leçon">
+                <h1>{{ lesson.title }}</h1>
+                <span>{{ lesson.description }}</span>
+            </div>
         </div>
+        <div class="header-right">
             <button @click="openModal">Créer une question</button>
+            <button @click="launchLesson" class="launch-btn">Lancer la leçon</button>
+        </div>
     </div>
     <div class="container-body">
         <div class="questions-list">
@@ -32,7 +41,7 @@
 </div>
 
 <!-- Modal pour créer une question --> 
-<div v-if="showModal" class="modal-overlay" @click="showModal = false">
+<div v-if="showModal" class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
         <h2>{{ isEditing ? 'Modifier une question :' : 'Ajouter une question :' }}</h2>
         <form @submit.prevent="saveQuestion">
@@ -51,13 +60,13 @@
             </div>
 
             <div class="form-group">
-                <input type="text" placeholder="Question" required>
+                <input type="text" v-model="newQuestion.question" placeholder="Question" required>
             </div>
 
             <div v-if="selectedType === 'multiple'" class="form-group">
                 <label id="options">Options :</label>
                 <div v-for="(option, index) in newQuestion.possibilities" :key="index" class="option-input">
-                    <input type="text" :placeholder="`Option ${index + 1}`" required>
+                    <input type="text" v-model="option.value" :placeholder="`Option ${index + 1}`" required>
                     <button type="button" @click="removeOption(index)" class="remove-btn">×</button>
                 </div>
                 <button type="button" @click="addOption" class="add-option-btn">+ Ajouter une option</button>
@@ -76,8 +85,8 @@
             </div>
 
             <div class="modal-actions">
-                <button type="button" @click="showModal = false" class="cancel-btn">Annuler</button>
-                <button type="submit" class="save-btn" @click="createQuestion">Enregistrer</button>
+                <button type="button" @click="closeModal" class="cancel-btn">Annuler</button>
+                <button type="submit" class="save-btn">Enregistrer</button>
             </div>
         </form>
     </div>
@@ -87,7 +96,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import lessonService from '@/services/LessonService';
 import { Lesson } from '@/services/LessonService';
 import questionService from '@/services/QuestionService';
@@ -97,12 +106,11 @@ import { API_URL } from '@/services/api';
 import axiosInstance from '@/services/axiosInstance'; 
 import { useAuthStore } from '@/stores/auth';
 
-
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const token = ref(authStore.token); 
-const lesson = ref({
-});                         
+const lesson = ref({});                         
 const showModal = ref(false);
 const isEditing = ref(false);
 const editingIndex = ref(-1);
@@ -113,21 +121,62 @@ const newQuestion = ref({
     type: 'multiple',
     answer: '',
     possibilities: [{
-        value: 'Option 1'
+        value: ''
     }, 
     {
-        value: 'Option 2'
+        value: ''
     }, 
     {
-        value: 'Option 3'
+        value: ''
     }]
 });
 
+// Détecter d'où l'utilisateur vient
+const getPreviousPage = () => {
+    // Utiliser l'historique de navigation pour détecter la page précédente
+    const historyLength = window.history.length;
+    const currentPath = window.location.pathname;
+    
+    console.log('Current path:', currentPath);
+    console.log('History length:', historyLength);
+    
+    // Si on a un paramètre de route indiquant qu'on vient de CourseLessons
+    if (route.query.from === 'course-lessons') {
+        return 'course-lessons';
+    }
+    
+    // Si on a un paramètre de route indiquant qu'on vient de Home
+    if (route.query.from === 'home') {
+        return 'home';
+    }
+    
+    // Si on a un paramètre de route indiquant qu'on vient de Courses
+    if (route.query.from === 'courses') {
+        return 'courses';
+    }
+    
+    // Par défaut, essayer de détecter via le referrer (moins fiable)
+    const referrer = document.referrer;
+    console.log('Referrer:', referrer);
+    
+    // Si on vient de CourseLessons (contient /course/ et /lessons)
+    if (referrer.includes('/courses/') && referrer.includes('/lessons')) {
+        return 'course-lessons';
+    }
+    
+    // Si on vient de la page des cours
+    if (referrer.includes('/courses') && !referrer.includes('/lessons')) {
+        return 'courses';
+    }
+    
+    // Par défaut, retourner à Home
+    return 'home';
+};
 
 onMounted(async () => {
     const lessonId = parseInt(route.params.id as string);
     const lessonData = await lessonService.getLessonById(lessonId);
-    
+     
     // Il n'y a pas de méthode getQuestionsByLesson dans le service de questions
     // Je vais donc supposer qu'il faut les récupérer via la leçon elle-même
     // ou qu'une autre méthode existe. Pour l'instant, je m'assure que `questions` est un tableau.
@@ -143,9 +192,9 @@ onMounted(async () => {
 });
 
 const addOption = () => {
-    newQuestion.value.possibilities.push(
-        `Option ${newQuestion.value.possibilities.length + 1}`
-    );
+    newQuestion.value.possibilities.push({
+        value: ''
+    });
 };
 
 const removeOption = (index: number) => {
@@ -153,7 +202,6 @@ const removeOption = (index: number) => {
         newQuestion.value.possibilities.splice(index, 1);
     }
 };
-
 
 const saveQuestion = async () => {
     newQuestion.value.type = selectedType.value;
@@ -171,17 +219,24 @@ const saveQuestion = async () => {
         lesson.value.questions.push(question);
     }
     
-    showModal.value = false;
-    resetForm();
+    closeModal();
 };
 
 const resetForm = () => {
     newQuestion.value = {
-        id: 0,
+        lesson: lesson.value,
         question: '',
         type: 'multiple',
         answer: '',
-        possibilities: ['Option 1', 'Option 2', 'Option 3']
+        possibilities: [{
+            value: ''
+        }, 
+        {
+            value: ''
+        }, 
+        {
+            value: ''
+        }]
     };
     selectedType.value = 'multiple';
 };
@@ -196,7 +251,15 @@ const editQuestion = (index: number) => {
         question: question.question,
         type: question.type,
         answer: question.answer,
-        possibilities: question.type === 'multiple' ? [...question.possibilities] : ['Option 1', 'Option 2', 'Option 3']
+        possibilities: question.type === 'multiple' ? [...question.possibilities] : [{
+            value: ''
+        }, 
+        {
+            value: ''
+        }, 
+        {
+            value: ''
+        }]
     };
     showModal.value = true;
 };
@@ -208,7 +271,46 @@ const deleteQuestion = async (index: number) => {
 
 const openModal = () => {
     showModal.value = true;
-}
+    resetForm();
+};
+
+const closeModal = () => {
+    showModal.value = false;
+    resetForm();
+    isEditing.value = false;
+    editingIndex.value = -1;
+};
+
+const goBack = () => {
+    const previousPage = getPreviousPage();
+    
+    console.log('Previous page detected:', previousPage);
+    
+    if (previousPage === 'course-lessons') {
+        // Retourner à CourseLessons en utilisant l'ID du cours
+        // On doit récupérer l'ID du cours depuis la leçon
+        if (lesson.value.course && lesson.value.course.id) {
+            router.push(`/courses/${lesson.value.course.id}`);
+        } else {
+            // Fallback vers la page des cours
+            router.push('/courses');
+        }
+    } else if (previousPage === 'course') {
+        // Retourner à la page des cours
+        router.push('/courses');
+    } else {
+        // Retourner à Home
+        router.push('/');
+    }
+};
+
+
+const launchLesson = () => {
+    // Lancer la leçon en allant vers Lesson.vue
+    router.push(`/lessons/${lesson.value.id}`);
+};
+
+
 </script>
 
 <style scoped>
@@ -233,6 +335,38 @@ const openModal = () => {
     border: 1px solid var(--border-color);
     flex-wrap: wrap;
     gap: var(--spacing-md);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.back-btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color var(--transition-normal);
+    white-space: nowrap;
+}
+
+.back-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+.back-icon {
+    margin-right: var(--spacing-xs);
 }
 
 .Info-leçon h1 {
@@ -263,6 +397,14 @@ const openModal = () => {
 
 .container-header button:hover {
     background-color: var(--primary-hover);
+}
+
+.launch-btn {
+    background-color: #28a745 !important;
+}
+
+.launch-btn:hover {
+    background-color: #218838 !important;
 }
 
 .questions-list {
