@@ -13,10 +13,9 @@
                 <div v-for="lesson in lessons" :key="lesson.id" class="lesson-card" @click="goToLesson(lesson.id)">
                     <div class="lesson-content">
                         <h2 class="lesson-title">{{ lesson.title }}</h2>
-                        <p class="lesson-description">{{ lesson.description }}</p>
+                        <p class="lesson-description" ></p>
                         <div class="lesson-footer">
                             <div class="lesson-actions">
-                                <button @click.stop="editLesson(lesson)" class="edit-btn">Modifier</button>
                                 <button @click.stop="goToCreateQuestions(lesson.id)" class="questions-btn">Questions</button>
                                 <button @click.stop="deleteLesson(lesson.id)" class="delete-btn">Supprimer</button>
                             </div>
@@ -55,6 +54,7 @@ import { useRoute, useRouter } from 'vue-router';
 import CourseService from '@/services/CourseService';
 import { Lesson } from '@/services/LessonService';
 import lessonService from '@/services/LessonService';
+
 
 const route = useRoute();
 const router = useRouter();
@@ -98,7 +98,7 @@ onMounted(async () => {
 const loadLessons = async (courseId: number) => {
     try {
         // Récupérer toutes les leçons et filtrer par cours
-        const allLessons = await lessonService.getLessons();
+        const allLessons = await lessonService.getAllLessons();
         console.log('Toutes les leçons récupérées:', allLessons);
         
         // Filtrer les leçons qui appartiennent à ce cours
@@ -134,6 +134,7 @@ const resetForm = () => {
 
 const saveLesson = async () => {
     try {
+        
         if (isEditing.value && editingLesson.value) {
             // Modification d'une leçon existante
             const updatedLesson = await lessonService.updateLesson(editingLesson.value.id!, newLesson.value);
@@ -176,11 +177,11 @@ const deleteLesson = async (lessonId: number) => {
 };
 
 const goToLesson = (lessonId: number) => {
-    router.push(`/lessons/${lessonId}`);
+    router.push(`/lesson-content/${lessonId}`);
 };
 
 const goToCreateQuestions = (lessonId: number) => {
-    router.push(`/create-lesson/${lessonId}?from=course-lessons`);
+    router.push(`/questionnaire-gestion/lessons/${lessonId}`);
 };
 </script>
 

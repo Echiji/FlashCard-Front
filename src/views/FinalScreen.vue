@@ -116,7 +116,7 @@ const goToHome = () => {
 };
 
 const retryLesson = () => {
-    router.push('/courses');
+    router.push('/lesson/' + testControle.value.lessonId);
 };
 </script>
 

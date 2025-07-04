@@ -3,6 +3,7 @@
         <div class="lesson-content">
             <h2 class="lesson-title title title-md">{{ lesson.title }}</h2>
             <p class="lesson-description">{{ lesson.description }}</p>
+            <p>Questions : {{ lesson.questionCount }}</p>
             <div class="lesson-footer">
                 <div class="lesson-actions">
                     <button @click.stop="goToEditMode" class="btn btn-primary btn-sm">Créer une question</button>
@@ -16,7 +17,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import lessonService from '@/services/LessonService';
-import { defineEmits } from 'vue';
 
 const router = useRouter();
 const emit = defineEmits(['deleted']);
@@ -27,6 +27,7 @@ const props = defineProps<{
         description: string;
         questions: string[];
         answers: string[];
+        questionCount: number;
     };
 }>();
 

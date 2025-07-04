@@ -1,24 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Lesson from './views/Lesson.vue';
+import FlashCard from './views/FlashCard.vue';
+import LessonContent from './views/LessonContent.vue';
 import FinalScreen from './views/FinalScreen.vue';
 import LogIn from './views/LogIn.vue';
 import Register from './views/Register.vue';
-import CreateLesson from './views/CreateLesson.vue';  
-import NewUser from './views/NewUser.vue';
 import Profile from './views/Profile.vue';
-import Course from './views/Course.vue';
 import CourseLessons from './views/CourseLessons.vue';
+import Home from './views/Home.vue';
+import HomeNewUser from './views/HomeNewUser.vue';
+import QuestionnaireGestion from './views/QuestionnaireGestion.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      component: Course
+      component: Home
     },
     {
       path: '/NewUser',
-      component: NewUser
+      component: HomeNewUser
     },
     {
       path: '/login',
@@ -29,12 +30,12 @@ const router = createRouter({
       component: Register
     },
     {
-      path: '/create-lesson/:id',
-      component: CreateLesson
+      path: '/lesson-content/:id',
+      component: LessonContent,
     },
     {
-      path: '/lessons/:id',
-      component: Lesson,
+      path: '/flashcard/:id',
+      component: FlashCard,
     },
     {
       path: '/final-screen/:id',
@@ -45,12 +46,12 @@ const router = createRouter({
       component: Profile
     },
     {
-      path: '/courses',
-      component: Course
-    },
-    {
       path: '/courses/:id',
       component: CourseLessons
+    },
+    {
+      path: `/questionnaire-gestion/lessons/:id`,
+      component: QuestionnaireGestion
     }
   ]
 });

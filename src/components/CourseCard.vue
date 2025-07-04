@@ -2,6 +2,7 @@
     <div class="course-card" @click="goToCourseLessons">
         <h3>{{ course.title }}</h3>
         <p>{{ course.typeCourse }}</p>
+        <p>Nombre de leçons : {{ course.lessonCount }}</p>
         <div class="course-actions">
             <button @click.stop="editCourse">Edit</button>
             <button @click.stop="deleteCourse">Delete</button>
@@ -22,6 +23,7 @@ interface Course {
     title: string;
     typeCourse: string;
     user_id: number;
+    lessonCount: number;
 }
 
 const props = defineProps<{

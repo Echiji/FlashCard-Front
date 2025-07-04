@@ -1,6 +1,6 @@
 <template>
     <div class="lesson-container">
-        <div v-if="!loading && currentLesson" class="flash-card">
+        <div v-if="!loading && questions.length > 0" class="flash-card">
             <div class="flash-card-front">
                 <h1>{{ questions && questions[currentIndex] ? questions[currentIndex].question : 'Chargement...' }}</h1>
             </div>
@@ -11,12 +11,12 @@
                 <div v-if="questions && questions[currentIndex] && questions[currentIndex].type === 'text'">
                     <input type="text" v-model="answer" @keyup.enter="checkAnswer" placeholder="Tapez votre réponse..."/>
                 </div>
-                <div v-else-if="questions && questions[currentIndex] && questions[currentIndex].type === 'multiple' && questions[currentIndex].possibilities" class="multiple-choice">
-                    <div v-for="(possibility, index) in questions[currentIndex].possibilities" :key="index" class="choice-option">
-                        <input type="radio" :id="'option-' + index" :value="possibility.value" v-model="answer">
-                        <label :for="'option-' + index">{{ possibility.value }}</label>
+                <div v-else-if="questions && questions[currentIndex] && (questions[currentIndex].type === 'multiple' || questions[currentIndex].type === 'qcm') && questions[currentIndex].possibilities" class="multiple-choice">
+                    <div v-for="possibility in questions[currentIndex].possibilities" :key="possibility.id" class="choice-option">
+                        <input type="radio" :value="possibility.possibility" v-model="selectedPossibility" :id="'possibility-' + possibility.id" />
+                        <label :for="'possibility-' + possibility.id">{{ possibility.possibility }}</label>
                     </div>
-                </div>
+                </div>  
                 <div v-else-if="!questions || questions.length === 0" class="no-questions">
                     <p>Aucune question disponible pour cette leçon.</p>
                 </div>
@@ -38,7 +38,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import LessonService from '@/services/LessonService';
 import QuestionService from '@/services/QuestionService';
 import TestControleService from '@/services/TestControleService';
 import { useAuthStore } from '@/stores/auth';
@@ -49,66 +48,117 @@ const authStore = useAuthStore();
 
 const currentIndex = ref(0);
 const showAnswer = ref(false);
-const currentLesson = ref(null);
 const testControle = ref({
-    lessonId: 0,
+    questionnaireId: 0,
     nbBonneReponse: 0,
     nbQuestion: 0,
     userId: 0,
 });
-const questions = ref(null);    
+const questions = ref<any[]>([]);
 const loading = ref(true);
 const answer = ref('');
 const correctAnswer = ref(false);
-
-onMounted(async () => {
-        const lessonId = route.params.id;
-        currentLesson.value = await LessonService.getLessonById(parseInt(lessonId as string));
-        questions.value = await QuestionService.getQuestionsByLesson(currentLesson.value);
-        console.log(authStore.currentUser)
-        testControle.value.lessonId = currentLesson.value.id;
-        testControle.value.nbQuestion = questions.value.length;
-        testControle.value.userId = parseInt(authStore.currentUser?.id || '0');
-        console.log(testControle.value)
-        loading.value = false;
-    }
-);
-
+const selectedPossibility = ref(null);
 const totalQuestions = computed(() => {
     if (!questions.value) return 0;
     return questions.value.length;
 });
 
+onMounted(async () => {
+    const questionnaireId = route.params.id;
+    testControle.value.questionnaireId = parseInt(questionnaireId as string);
+    testControle.value.userId = parseInt(authStore.currentUser?.id || '0');
+    
+    console.log('=== DÉBUT DU TEST ===');
+    console.log('Questionnaire ID:', testControle.value.questionnaireId);
+    console.log('User ID:', testControle.value.userId);
+    
+    try {
+        questions.value = await QuestionService.getQuestionsByQuestionnaireId(testControle.value.questionnaireId);
+        testControle.value.nbQuestion = questions.value.length;
+        console.log('Questions chargées:', questions.value);
+        console.log('Nombre total de questions:', testControle.value.nbQuestion);
+        console.log('Question actuelle (index 0):', questions.value[0]);
+    } catch (error) {
+        console.error('Erreur lors du chargement des questions:', error);
+    }
+    loading.value = false;
+});
+
 const checkAnswer = async () => {
     if (!questions.value || !questions.value[currentIndex.value]) return;
     
-    if (answer.value.toLowerCase() === questions.value[currentIndex.value].answer.toLowerCase()) {
+    const currentQuestion = questions.value[currentIndex.value];
+    let userAnswer = '';
+    
+    console.log('=== VÉRIFICATION DE RÉPONSE ===');
+    console.log('Index de la question actuelle:', currentIndex.value);
+    console.log('Question complète:', currentQuestion);
+    console.log('Type de question:', currentQuestion.type);
+    console.log('Possibilités:', currentQuestion.possibilities);
+    console.log('Détail des possibilités:', currentQuestion.possibilities?.map(p => ({ id: p.id, possibility: p.possibility })));
+    console.log('selectedPossibility.value:', selectedPossibility.value);
+    console.log('answer.value:', answer.value);
+    
+    // Déterminer la réponse de l'utilisateur selon le type de question
+    if (currentQuestion.type === 'text') {
+        userAnswer = answer.value;
+        console.log('Type: Question libre - Réponse utilisateur:', userAnswer);
+    } else if (currentQuestion.type === 'multiple' || currentQuestion.type === 'qcm') {
+        userAnswer = selectedPossibility.value;
+        console.log('Type: Question à choix multiples - Réponse utilisateur:', userAnswer);
+    }
+    
+    console.log('Réponse attendue:', currentQuestion.answer);
+    console.log('Réponse utilisateur finale:', userAnswer);
+    console.log('Comparaison (sensible à la casse):', userAnswer === currentQuestion.answer);
+    console.log('Comparaison (insensible à la casse):', userAnswer.toLowerCase().trim() === currentQuestion.answer.toLowerCase().trim());
+    
+    if (userAnswer.toLowerCase().trim() === currentQuestion.answer.toLowerCase().trim()) {
+        console.log('✅ RÉPONSE CORRECTE!');
         correctAnswer.value = true;
         showAnswer.value = false;
         testControle.value.nbBonneReponse++;
+        console.log('Score actuel:', testControle.value.nbBonneReponse, '/', testControle.value.nbQuestion);
+        
         if (currentIndex.value < totalQuestions.value - 1) {
+            console.log('Passage à la question suivante...');
             nextQuestion();
         } else {
+            console.log('=== FIN DU TEST ===');
+            console.log('Score final:', testControle.value.nbBonneReponse, '/', testControle.value.nbQuestion);
+            console.log('Données du test à sauvegarder:', testControle.value);
+            
             try {
                 const testControleCreated = await TestControleService.createTestControle(testControle.value);
+                console.log('Test sauvegardé avec succès:', testControleCreated);
                 router.push(`/final-screen/${testControleCreated.id}`);
             } catch (error) {
                 console.error('Erreur lors de la création du test contrôle:', error);
-                // Gérer l'erreur - par exemple afficher un message à l'utilisateur
                 alert('Erreur lors de la sauvegarde du résultat. Veuillez réessayer.');
             }
         }
     } else {
+        console.log('❌ RÉPONSE INCORRECTE');
         showAnswer.value = true;
         testControle.value.nbBonneReponse--;
+        console.log('Score après pénalité:', testControle.value.nbBonneReponse, '/', testControle.value.nbQuestion);
     }
 };
 
 const nextQuestion = () => {
     if (currentIndex.value < totalQuestions.value - 1) {
+        const oldIndex = currentIndex.value;
         currentIndex.value++;
         showAnswer.value = false;
-        answer.value = '';
+        selectedPossibility.value = null;
+        answer.value = ''; // Réinitialiser aussi la réponse texte
+        
+        console.log('=== PASSAGE À LA QUESTION SUIVANTE ===');
+        console.log('Ancien index:', oldIndex, '→ Nouvel index:', currentIndex.value);
+        console.log('Question suivante:', questions.value[currentIndex.value]);
+        console.log('Réinitialisation - selectedPossibility:', selectedPossibility.value);
+        console.log('Réinitialisation - answer:', answer.value);
     }
 };
 </script>

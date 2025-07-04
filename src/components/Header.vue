@@ -56,10 +56,9 @@ const handleHome = () => {
       <!-- Navigation desktop -->
       <nav class="nav desktop-nav">
         <button v-if="isLoggedIn" @click="router.push('/')" class="nav-button">Home</button>
-        <button v-else @click="router.push('/NewUser')" class="nav-button">Home</button>
+        <button v-else @click="router.push('/homeNewUser')" class="nav-button">Home</button>
         <template v-if="isLoggedIn">
           <button @click="router.push('/profile')" class="nav-button">Profile</button>
-          <button @click="router.push('/courses')" class="nav-button">Course</button>
           <div class="user-menu">
             <button @click="handleLogout" class="nav-button logout">Logout</button>
           </div>
